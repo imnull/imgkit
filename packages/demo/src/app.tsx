@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import './app.scss'
-import { webRequestImageBlob, webCompressImageLimit, webCreateImageByUrl, webCropImage, readAsDataURL } from '@imnull/imgkit'
+import {
+    webRequestImageBlob, webCompressImageLimit, webCreateImageByUrl, webCropImage, readAsDataURL,
+    rebuildImage,
+} from '@imnull/imgkit'
 
 const UNITS = ['KB', 'MB', 'GB']
 const parseSize = (size: number, unit: number = 1000) => {
@@ -15,6 +18,7 @@ const parseSize = (size: number, unit: number = 1000) => {
     }
     return Math.round(s * 100) / 100 + u
 }
+
 
 export default () => {
     const [dataUrl, setDataUrl] = useState('')
@@ -62,7 +66,21 @@ export default () => {
         }}>裁切图片到指定尺寸200*200</button>
         <hr />
         <div className='info'>{tarInfo}</div>
-        <img src={dataUrl} />
+        <hr />
+        <input type="file" onChange={async e => {
+            const files = [...(e.target.files || [])]
+            const file = files[0]
+            const img = await rebuildImage(file)
+
+            // const clean = await removeExif(file)
+            // const exif = await readExif(file)
+
+            const dataUrl = await readAsDataURL(img)
+            setDataUrl(dataUrl)
+        }} />
+        <hr />
+        <img className='rebuild' src={dataUrl} />
+
     </div>
 }
 
