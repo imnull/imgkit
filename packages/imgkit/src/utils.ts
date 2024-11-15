@@ -66,3 +66,6 @@ export const base64ToBlob = (base64: string) => {
     const blob = new Blob([buff.buffer])
     return blob
 }
+
+export const isNil = (v: unknown) => typeof v === 'undefined' || v === null || (typeof v === 'string' && v.length < 1) || (typeof v === 'number' && isNaN(v))
+export const isValidNumber = (v: unknown): v is number => typeof v === 'number' && !isNaN(v)

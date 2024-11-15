@@ -1,4 +1,5 @@
-import { getCropRectCover, readAsDataURL } from "./utils"
+import { ExifOperator, TExif, TExifForce } from "./exif"
+import { getCropRectCover, isValidNumber, readAsDataURL } from "./utils"
 
 export const webCreateImageByUrl = (src: string) => new Promise<HTMLImageElement>((resolve, reject) => {
     const image = new Image()
@@ -116,3 +117,89 @@ export const webRequestImageBlob = (url: string) => new Promise<Blob>((resolve, 
     })
     xhr.send()
 })
+
+
+const needRebuild = (exif: TExif): exif is TExifForce => {
+    return isValidNumber(exif.Orientation) && exif.Orientation > 1 && isValidNumber(exif.ImageWidth) && isValidNumber(exif.ImageLength)
+}
+
+export const webRebuildImage = async (blob: Blob) => {
+    const arrBuf = await blob.arrayBuffer()
+    const exifOp = new ExifOperator(arrBuf)
+    const exif = exifOp.getExif()
+    console.log(exif)
+    if(!exif) {
+        return blob
+    }
+    if (!needRebuild(exif)) {
+        const segs = exifOp.removeExif()
+        if(blob instanceof File) {
+            return new File(segs, blob.name, { type: blob.type })
+        } else {
+            return new Blob(segs, { type: blob.type })
+        }
+    }
+    
+    const scale = [1, 1]
+    let rotate = 0
+    switch(exif.Orientation) {
+        // 2	水平翻转	图片进行了水平翻转（镜像），相当于沿y轴翻转
+        case 2:
+            scale[0] = -1
+            break
+        // 3	旋转180度	图片顺时针旋转了180度
+        case 3:
+            rotate = 2
+            break
+        // 4	垂直翻转	图片进行了垂直翻转，相当于沿x轴翻转，同时结合了180度旋转的效果（即先旋转180度再沿x轴翻转，或先沿x轴翻转再旋转180度，结果相同）
+        case 4:
+            scale[1] = -1
+            break
+        // 5	逆时针旋转90度并水平翻转	图片先逆时针旋转90度，然后进行了水平翻转
+        // 这里因为旋转的90度，操作水平轴向变为纵向才符合预期
+        case 5:
+            rotate = -1
+            scale[1] = -1
+            break
+        // 6	顺时针旋转90度	图片顺时针旋转了90度
+        case 6:
+            rotate = 1
+            break
+        // 7	逆时针旋转90度并垂直翻转	图片先逆时针旋转90度，然后进行了垂直翻转
+        // 这里因为旋转的90度，操作垂直轴向变为水平方向才符合预期
+        case 7:
+            rotate = -1
+            scale[0] = -1
+            break
+        // 8	顺时针旋转270度	图片顺时针旋转了270度（相当于逆时针旋转90度）
+        case 8:
+            rotate = -1
+            break
+    }
+    const size = [exif.ImageWidth, exif.ImageLength]
+    const canvasSize = [...size]
+    if(Math.abs(rotate) % 2 === 1) {
+        canvasSize.reverse()
+    }
+
+    const segments = exifOp.removeExif()
+    const cleanBlob = new Blob(segments, { type: blob.type })
+    const dataUrl = await readAsDataURL(cleanBlob)
+    const image = await webCreateImageByUrl(dataUrl)
+    const canvas = document.createElement('canvas')
+    canvas.width = canvasSize[0]
+    canvas.height = canvasSize[1]
+    const ctx = canvas.getContext('2d')!
+    ctx.translate(canvas.width / 2, canvas.height / 2)
+    ctx.rotate(rotate * .5 * Math.PI)
+    ctx.scale(scale[0], scale[1])
+    ctx.drawImage(image
+        , 0, 0, image.width, image.height
+        , size[0] / -2, size[1] / -2, size[0], size[1]
+    )
+    const res = await webCanvasToBlob(canvas, blob.type)
+    if(blob instanceof File) {
+        return new File([res], blob.name, { type: blob.type })
+    }
+    return res
+}
