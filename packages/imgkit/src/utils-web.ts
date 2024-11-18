@@ -1,8 +1,9 @@
 import { ExifOperator, TExif, TExifForce } from "./exif"
-import { getCropRectCover, isValidNumber, readAsDataURL } from "./utils"
+import { exifHasOrientation, exifHasSize, getCropRectCover, isValidNumber, readAsDataURL } from "./utils"
 
 export const webCreateImageByUrl = (src: string) => new Promise<HTMLImageElement>((resolve, reject) => {
     const image = new Image()
+    image.crossOrigin = "anonymous"
     image.addEventListener('load', () => {
         resolve(image)
     })
@@ -14,7 +15,7 @@ export const webCreateImageByUrl = (src: string) => new Promise<HTMLImageElement
 
 export const webCanvasToBlob = (canvas: HTMLCanvasElement, type?: string, quality?: any) => new Promise<Blob>((resolve, reject) => {
     canvas.toBlob(blob => {
-        if(!blob) {
+        if (!blob) {
             reject('Canvas to Blob failed')
         } else {
             resolve(blob)
@@ -40,7 +41,7 @@ export const webCompressImage = async (blob: Blob, sub: number) => {
 
     const result = await webCanvasToBlob(canvas, 'image/jpeg', 1)
     console.log(`[CompressImage] sub=${sub} from [${image.width} * ${image.height}] ${blob.size} to [${w} * ${h}] ${result.size}`)
-    
+
     return {
         blob: result,
         width: w,
@@ -53,7 +54,7 @@ const adjustSub = (val: number, min: number = 1.1, max: number = 1.4) => {
 }
 
 export const webCompressImageLimit = async (blob: Blob, limit: number = 800 * 1000) => {
-    if(blob.size <= limit) {
+    if (blob.size <= limit) {
         const dataUrl = await readAsDataURL(blob)
         const img = await webCreateImageByUrl(dataUrl)
         return {
@@ -64,10 +65,10 @@ export const webCompressImageLimit = async (blob: Blob, limit: number = 800 * 10
     }
     let sub = adjustSub(blob.size / limit)
     let result = await webCompressImage(blob, sub)
-    
+
     let c = 0
-    while(result.blob.size > limit) {
-        if(++c > 100) {
+    while (result.blob.size > limit) {
+        if (++c > 100) {
             break
         }
         sub *= adjustSub(result.blob.size / limit)
@@ -107,8 +108,8 @@ export const webRequestImageBlob = (url: string) => new Promise<Blob>((resolve, 
     xhr.open('GET', url)
     xhr.responseType = 'blob'
     xhr.addEventListener('readystatechange', () => {
-        if(xhr.readyState === 4) {
-            if(xhr.status < 300 && xhr.status >= 200) {
+        if (xhr.readyState === 4) {
+            if (xhr.status < 300 && xhr.status >= 200) {
                 resolve(xhr.response as Blob)
             } else {
                 reject(`XHR failed: ${xhr.status}`)
@@ -120,29 +121,41 @@ export const webRequestImageBlob = (url: string) => new Promise<Blob>((resolve, 
 
 
 const needRebuild = (exif: TExif): exif is TExifForce => {
-    return isValidNumber(exif.Orientation) && exif.Orientation > 1 && isValidNumber(exif.ImageWidth) && isValidNumber(exif.ImageLength)
+    return exifHasOrientation(exif) && exifHasSize(exif) && exif.Orientation! > 1
+}
+
+const getExifSize = (exif: TExif): [number, number] => {
+    if (isValidNumber(exif.ImageWidth) && (isValidNumber(exif.ImageLength) || isValidNumber(exif.ImageHeight))) {
+        return [exif.ImageWidth, isValidNumber(exif.ImageLength) ? exif.ImageLength : exif.ImageHeight] as [number, number]
+    } else if (isValidNumber(exif.PixelXDimension) && isValidNumber(exif.PixelYDimension)) {
+        return [exif.PixelXDimension, exif.PixelYDimension]
+    } else {
+        throw 'The EXIF has no size infomations.'
+    }
 }
 
 export const webRebuildImage = async (blob: Blob) => {
     const arrBuf = await blob.arrayBuffer()
     const exifOp = new ExifOperator(arrBuf)
     const exif = exifOp.getExif()
-    console.log(exif)
-    if(!exif) {
+    if (!exif) {
         return blob
     }
     if (!needRebuild(exif)) {
         const segs = exifOp.removeExif()
-        if(blob instanceof File) {
+        if (blob instanceof File) {
             return new File(segs, blob.name, { type: blob.type })
         } else {
             return new Blob(segs, { type: blob.type })
         }
     }
-    
+
     const scale = [1, 1]
+    const size = getExifSize(exif)
+    const canvasSize = [...size] as [number, number]
     let rotate = 0
-    switch(exif.Orientation) {
+
+    switch (exif.Orientation) {
         // 2	水平翻转	图片进行了水平翻转（镜像），相当于沿y轴翻转
         case 2:
             scale[0] = -1
@@ -176,9 +189,7 @@ export const webRebuildImage = async (blob: Blob) => {
             rotate = -1
             break
     }
-    const size = [exif.ImageWidth, exif.ImageLength]
-    const canvasSize = [...size]
-    if(Math.abs(rotate) % 2 === 1) {
+    if (Math.abs(rotate) % 2 === 1) {
         canvasSize.reverse()
     }
 
@@ -197,8 +208,9 @@ export const webRebuildImage = async (blob: Blob) => {
         , 0, 0, image.width, image.height
         , size[0] / -2, size[1] / -2, size[0], size[1]
     )
+    const dataUrlNew = canvas.toDataURL(blob.type)
     const res = await webCanvasToBlob(canvas, blob.type)
-    if(blob instanceof File) {
+    if (blob instanceof File) {
         return new File([res], blob.name, { type: blob.type })
     }
     return res

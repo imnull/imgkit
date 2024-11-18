@@ -1,16 +1,16 @@
 import { IMAGE_TAGS, PHOTO_TAGS, IOP_TAGS, GPSINFO_TAGS, MPFINFO_TAGS, TExifDataType, TYPE_MAP, TYPE_SIZE } from './exif-presets'
 
-export type TExif = {
-    ImageWidth?: number;
-    ImageLength?: number;
-    Orientation?: number;
-    [key: string]: string | number | undefined;
-}
-
 export type TExifForce = {
     ImageWidth: number;
+    ImageHeight: number;
     ImageLength: number;
+    PixelXDimension: number;
+    PixelYDimension: number;
     Orientation: number;
+}
+
+export type TExif = {
+    [key in keyof TExifForce]?: number;
 }
 
 export class BinOperator {

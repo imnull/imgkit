@@ -1,0 +1,34 @@
+.exif-list-wrapper {
+    width: 96vw;
+    flex: 1;
+    box-sizing: border-box;
+    overflow: auto;
+    h3 {
+        margin: 0;
+        padding: 2vw 0;
+        line-height: 1em;
+        font-size: 6vw;
+        position: sticky;
+        top: 0;
+        background-color: #fff;
+        text-indent: 2vw;
+    }
+    ul {
+        margin: 0;
+        padding: 0 2vw;
+        list-style: none;
+        padding-bottom: 5vw;
+    }
+    li {
+        display: flex;
+        flex-direction: row;
+        font-size: 12px;
+        label {
+            color: #222;
+        }
+        span {
+            color: #666;
+            margin-left: 5px;
+        }
+    }
+}

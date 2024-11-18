@@ -46,11 +46,11 @@ module.exports = options => {
                 title: 'IMGKIT DEMO',
             }),
             new CleanWebpackPlugin(),
-            new CopyWebpackPlugin({
-                patterns: [
-                    { from: 'static' }
-                ]
-            })
+            // new CopyWebpackPlugin({
+            //     patterns: [
+            //         { from: 'static' }
+            //     ]
+            // })
         ],
 
         // 解析选项
@@ -58,12 +58,11 @@ module.exports = options => {
             extensions: ['.tsx', '.ts', '.jsx', '.js'],
             alias: {
                 '~': path.resolve('./src'),
-                '@images': path.resolve('./src/images'),
             }
         },
         devServer: {
             port: 3602,
-            static: path.resolve('static'),
+            // static: path.resolve('static'),
             hot: true,
             allowedHosts: 'all',
         },
