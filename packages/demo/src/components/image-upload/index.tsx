@@ -7,7 +7,7 @@ export default (props: {
 }) => {
     const { onSelected } = props
     const [input, setInput] = useState<HTMLInputElement | null>(null)
-    const [backgroundImage] = useState(genSvgDataURL('upload', '#aaa'))
+    const [backgroundImage] = useState(genSvgDataURL('upload-circle', '#ddd'))
     return <div
         className="image-upload-wrapper"
         style={{ backgroundImage: `url("${backgroundImage}")` }}
