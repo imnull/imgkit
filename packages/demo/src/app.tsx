@@ -4,7 +4,7 @@ import ImageUpload from '~/components/image-upload'
 import ImageViewer from '~/components/image-viewer'
 import Button from '~/components/button'
 import ExifList from '~/components/exif-list'
-import { readAsDataURL, webRebuildImage, ExifOperator } from '@imnull/imgkit';
+import { readAsDataURL, webRebuildImage, ExifOperator } from '@imnull/imgkit/src/index';
 
 export default () => {
     const [src, setSrc] = useState('')

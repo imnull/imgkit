@@ -111,11 +111,17 @@ export class BinOperator {
             // }
             case 'Float':
             case 'SFloat': {
+                if(bin.length < 1) {
+                    return 0
+                }
                 return new DataView(bin.buffer).getFloat32(0)
             }
             case 'Double':
             case 'SDouble':
             case 'SRational': {
+                if(bin.length < 1) {
+                    return 0
+                }
                 return new DataView(bin.buffer).getFloat64(0)
             }
         }
