@@ -1,12 +1,12 @@
 {
   "name": "@imnull/imgkit",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "",
   "main": "dist/index.js",
-  "module": "src/index.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc src/index.ts --outDir dist -d -m commonjs -t es5"
+    "build": "tsc src/index.ts --outDir dist -d -m commonjs -t es5",
+    "pub": "npm publish --registry=https://registry.npmjs.org"
   },
   "keywords": [],
   "author": "",
