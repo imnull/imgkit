@@ -27,19 +27,30 @@ export class BinOperator {
         return arr.join('')
     }
 
-    static GetBinNumber(bin: Uint8Array) {
+    static GetBinNumber(bin: Uint8Array, littleEndian: boolean) {
+        if(bin.length < 1) {
+            return NaN
+        }
         let n = 0
-        bin.forEach(c => {
+        const arr = Array.from(bin)
+        if(littleEndian) {
+            arr.reverse()
+        }
+        arr.forEach(c => {
             n = (n << 8) | c
         })
         return n
     }
 
-    static GetBinHex(bin: Uint8Array) {
+    static GetBinHex(bin: Uint8Array, littleEndian: boolean) {
         if (bin.length < 1) {
             return ''
         }
-        const hex = Array.from(bin).map(n => {
+        const arr = Array.from(bin)
+        if(littleEndian) {
+            arr.reverse()
+        }
+        const hex = arr.map(n => {
             let h = n.toString(16)
             if (h.length < 2) {
                 h = '0' + h
@@ -49,12 +60,12 @@ export class BinOperator {
         return '0x' + hex
     }
 
-    static ParseBinValue(bin: Uint8Array, type: TExifDataType) {
+    static ParseBinValue(bin: Uint8Array, type: TExifDataType, littleEndian: boolean) {
         switch (type) {
             case 'Rational': {
                 if (bin.length === 8) {
-                    const a = BinOperator.GetBinNumber(bin.slice(0, 4))
-                    const b = BinOperator.GetBinNumber(bin.slice(4, 8))
+                    const a = BinOperator.GetBinNumber(bin.slice(0, 4), littleEndian)
+                    const b = BinOperator.GetBinNumber(bin.slice(4, 8), littleEndian)
                     if (b === 1) {
                         return a
                     }
@@ -62,9 +73,9 @@ export class BinOperator {
                 }
                 // 经纬度
                 else if (bin.length === 24) {
-                    const degrees = BinOperator.ParseBinValue(bin.slice(0, 8), 'Rational') as number
-                    const minutes = BinOperator.ParseBinValue(bin.slice(8, 16), 'Rational') as number
-                    const seconds = BinOperator.ParseBinValue(bin.slice(16, 24), 'Rational') as number
+                    const degrees = BinOperator.ParseBinValue(bin.slice(0, 8), 'Rational', littleEndian) as number
+                    const minutes = BinOperator.ParseBinValue(bin.slice(8, 16), 'Rational', littleEndian) as number
+                    const seconds = BinOperator.ParseBinValue(bin.slice(16, 24), 'Rational', littleEndian) as number
                     // return `${degrees},${minutes},${seconds}`
                     return degrees + (minutes / 60) + (seconds / 360)
                 }
@@ -80,13 +91,13 @@ export class BinOperator {
             case 'Short':
             case 'Long':
             case 'Long8':
-                return BinOperator.GetBinNumber(bin)
+                return BinOperator.GetBinNumber(bin, littleEndian)
             case 'SByte':
             case 'SShort':
             case 'SLong':
             case 'SLong8': {
                 const bitLen = bin.length * 8
-                const num = BinOperator.GetBinNumber(bin)
+                const num = BinOperator.GetBinNumber(bin, littleEndian)
                 // 判断正负，0表示符号位置为0，是正数
                 if ((num & Math.pow(2, bitLen - 1)) === 0) {
                     return num
@@ -114,7 +125,7 @@ export class BinOperator {
                 if(bin.length < 1) {
                     return 0
                 }
-                return new DataView(bin.buffer).getFloat32(0)
+                return new DataView(bin.buffer).getFloat32(0, littleEndian)
             }
             case 'Double':
             case 'SDouble':
@@ -122,7 +133,7 @@ export class BinOperator {
                 if(bin.length < 1) {
                     return 0
                 }
-                return new DataView(bin.buffer).getFloat64(0)
+                return new DataView(bin.buffer).getFloat64(0, littleEndian)
             }
         }
     }
@@ -167,11 +178,11 @@ export class BinOperator {
     getString(start: number, end: number, zeroStop: boolean = true) {
         return BinOperator.GetBinString(this.slice(start, end), zeroStop)
     }
-    getNumber(start: number, end: number) {
-        return BinOperator.GetBinNumber(this.slice(start, end))
+    getNumber(start: number, end: number, littleEndian: boolean) {
+        return BinOperator.GetBinNumber(this.slice(start, end), littleEndian)
     }
-    getHex(start: number, end: number) {
-        return BinOperator.GetBinHex(this.slice(start, end))
+    getHex(start: number, end: number, littleEndian: boolean) {
+        return BinOperator.GetBinHex(this.slice(start, end), littleEndian)
 
     }
 }
@@ -238,8 +249,11 @@ export class ExifOperator extends BinOperator {
         if (start < 0) {
             return null
         }
+        const endian = this.getString(start + 10, start + 12)
+        const littleEndian = endian === 'II'
+
         // exif block size
-        const size = this.getNumber(start + 2, start + 4)
+        const size = this.getNumber(start + 2, start + 4, false)
         // Should be "Exif"
         const sign = this.getString(start + 4, start + 8)
         if (sign !== 'Exif') {
@@ -249,12 +263,11 @@ export class ExifOperator extends BinOperator {
          * - MM(0x4D4D): Big Endian
          * - II(0x4949): Little Endian
          */
-        const endian = this.getString(start + 10, start + 12)
         // Exif version
-        const version = this.getNumber(start + 12, start + 14)
+        const version = this.getNumber(start + 12, start + 14, littleEndian)
         const end = start + 2 + size
-        const ifdOffset = start + 2 + this.getNumber(start + 14, start + 18)
-        const tagCount = this.getNumber(start + 18, start + 20)
+        const ifdOffset = start + 2 + this.getNumber(start + 14, start + 18, littleEndian)
+        const tagCount = this.getNumber(start + 18, start + 20, littleEndian)
         const tagStart = start + 20
         return { start, size, end, sign, endian, version, ifdOffset, tagCount, tagStart }
     }
@@ -265,7 +278,8 @@ export class ExifOperator extends BinOperator {
         if (!schema) {
             return null
         }
-        this.readIFD(schema.tagStart, schema.tagCount, schema.ifdOffset, tag => {
+        const littleEndian = schema.endian === 'II'
+        this.readIFD(schema.tagStart, schema.tagCount, schema.ifdOffset, littleEndian, tag => {
             Object.assign(exif, tag)
         })
         return exif
@@ -282,19 +296,19 @@ export class ExifOperator extends BinOperator {
         return [a, b]
     }
 
-    private readIFD(start: number, count: number, ifdOffset: number, callback: (tag: Record<string, string | number>) => void) {
+    private readIFD(start: number, count: number, ifdOffset: number, littleEndian: boolean, callback: (tag: Record<string, string | number>) => void) {
         let s = start
         for (let i = 0; i < count; i++) {
             const bin = this.sliceBlock(s, 12)
-            this.parseTag(bin, ifdOffset, callback)
+            this.parseTag(bin, ifdOffset, littleEndian, callback)
             s += 12
         }
     }
 
-    private parseTag(bin: Uint8Array, ifdOffset: number, callback: (tag: Record<string, string | number>) => void) {
-        const name = BinOperator.GetBinHex(bin.slice(0, 2))
-        const type = BinOperator.GetBinHex(bin.slice(2, 4))
-        const count = BinOperator.GetBinNumber(bin.slice(4, 8))
+    private parseTag(bin: Uint8Array, ifdOffset: number, littleEndian: boolean, callback: (tag: Record<string, string | number>) => void) {
+        const name = BinOperator.GetBinHex(bin.slice(0, 2), littleEndian)
+        const type = BinOperator.GetBinHex(bin.slice(2, 4), littleEndian)
+        const count = BinOperator.GetBinNumber(bin.slice(4, 8), littleEndian)
 
         const tag = ExifOperator.FindTagHex(name, type)
         if (!tag) {
@@ -303,21 +317,21 @@ export class ExifOperator extends BinOperator {
         if (typeof tag.size === 'number') {
             const dataSize = tag.size * count
             if (dataSize > 4) {
-                const offset = BinOperator.GetBinNumber(bin.slice(8, 12))
-                const value = BinOperator.ParseBinValue(this.sliceBlock(ifdOffset + offset, dataSize), tag.type)
+                const offset = BinOperator.GetBinNumber(bin.slice(8, 12), littleEndian)
+                const value = BinOperator.ParseBinValue(this.sliceBlock(ifdOffset + offset, dataSize), tag.type, littleEndian)
                 callback({ [tag.key]: value })
             } else {
-                const value = BinOperator.ParseBinValue(bin.slice(8, 8 + dataSize), tag.type)
+                const value = BinOperator.ParseBinValue(bin.slice(8, 8 + dataSize), tag.type, littleEndian)
                 if (('ExifTag' === tag.key || 'GPSTag' === tag.key) && typeof value === 'number') {
-                    const c = BinOperator.GetBinNumber(this.sliceBlock(ifdOffset + value, 2))
+                    const c = BinOperator.GetBinNumber(this.sliceBlock(ifdOffset + value, 2), littleEndian)
                     const s = ifdOffset + value + 2
-                    this.readIFD(s, c, ifdOffset, callback)
+                    this.readIFD(s, c, ifdOffset, littleEndian, callback)
                 } else {
                     callback({ [tag.key]: value })
                 }
             }
         } else {
-            const offset = BinOperator.GetBinNumber(bin.slice(8, 12))
+            const offset = BinOperator.GetBinNumber(bin.slice(8, 12), littleEndian)
             const value = BinOperator.GetBinString(this.sliceBlock(ifdOffset + offset, count))
             if (value) {
                 callback({ [tag.key]: value })
