@@ -21,17 +21,7 @@ export default () => {
             <ImageUpload
                 onSelected={async file => {
 
-                    const raw = await readAsDataURL(file)
-                    const image = await webCreateImageByUrl(raw)
-                    const canvas = document.createElement('canvas')
-                    canvas.width = image.width
-                    canvas.height = image.height
-                    const context = canvas.getContext('2d')!
-                    context.drawImage(image
-                        , 0, 0, canvas.width, canvas.height
-                        , 0, 0, image.width, image.height
-                    )
-                    const origin = canvas.toDataURL()
+                    const origin = await readAsDataURL(file)
                     setOrigin(origin)
 
                     const buff = await file.arrayBuffer()
