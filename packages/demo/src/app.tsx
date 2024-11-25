@@ -1,14 +1,15 @@
 import { useState } from 'react';
 
-import { readAsDataURL, webRebuildImage, webCreateImageByUrl } from '@imnull/imgkit-web';
+import { readAsDataURL, webRebuildImage } from '@imnull/imgkit-web';
 import { ExifOperator } from '@imnull/exif'
 import { getMagicMime } from '@imnull/mime'
 
 import ImageUpload from '~/components/image-upload'
-import ImageViewer from '~/components/image-viewer'
 import ImageViewerCompare from '~/components/image-viewer-compare'
 import Button from '~/components/button'
 import ExifList from '~/components/exif-list'
+
+import { getExifSchema } from './exif'
 
 import './app.scss'
 
@@ -21,12 +22,16 @@ export default () => {
             <ImageUpload
                 onSelected={async file => {
 
+                    getExifSchema(file)
+
                     const origin = await readAsDataURL(file)
                     setOrigin(origin)
 
                     const buff = await file.arrayBuffer()
 
                     const op = new ExifOperator(buff)
+
+                    console.log('Exif schema', op.getExifSchema())
 
                     const mimeType = getMagicMime(new Uint8Array(buff))
                     console.log('detect content type', mimeType)

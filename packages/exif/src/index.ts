@@ -105,8 +105,6 @@ export class ExifOperator extends BinOperator {
         if (start < 0) {
             return null
         }
-        const endian = this.getString(start + 10, start + 12)
-        const littleEndian = endian === 'II'
 
         // exif block size
         const size = this.getNumber(start + 2, start + 4, false)
@@ -119,6 +117,9 @@ export class ExifOperator extends BinOperator {
          * - MM(0x4D4D): Big Endian
          * - II(0x4949): Little Endian
          */
+        const endian = this.getString(start + 10, start + 12)
+        const littleEndian = endian === 'II'
+
         // Exif version
         const version = this.getNumber(start + 12, start + 14, littleEndian)
         const end = start + 2 + size
