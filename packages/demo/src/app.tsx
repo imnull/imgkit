@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { readAsDataURL, webRebuildImage } from '@imnull/imgkit-web';
+import { readAsDataURL, webRebuildImage, webCreateImageByUrl } from '@imnull/imgkit-web';
 import { ExifOperator } from '@imnull/exif'
 import { getMagicMime } from '@imnull/mime'
 
@@ -17,11 +17,21 @@ export default () => {
     const [fixed, setFixed] = useState('')
     const [exif, setExif] = useState<any>(null)
     return <div className="app-root">
-        {!fixed ? <>
+        {!origin ? <>
             <ImageUpload
                 onSelected={async file => {
 
-                    const origin = await readAsDataURL(file)
+                    const raw = await readAsDataURL(file)
+                    const image = await webCreateImageByUrl(raw)
+                    const canvas = document.createElement('canvas')
+                    canvas.width = image.width
+                    canvas.height = image.height
+                    const context = canvas.getContext('2d')!
+                    context.drawImage(image
+                        , 0, 0, canvas.width, canvas.height
+                        , 0, 0, image.width, image.height
+                    )
+                    const origin = canvas.toDataURL()
                     setOrigin(origin)
 
                     const buff = await file.arrayBuffer()
