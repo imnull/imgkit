@@ -1,5 +1,6 @@
-import { ExifOperator, TExif, TExifForce } from "./exif"
-import { exifHasOrientation, exifHasSize, getCropRectCover, isValidNumber, readAsDataURL } from "./utils"
+import { ExifOperator } from "@imnull/exif"
+import { getCropRectCover, readAsDataURL } from "@imnull/imgkit"
+import { getExifSize, needRebuild, adjustSub } from './utils'
 
 export const webCreateImageByUrl = (src: string) => new Promise<HTMLImageElement>((resolve, reject) => {
     const image = new Image()
@@ -47,10 +48,6 @@ export const webCompressImage = async (blob: Blob, sub: number) => {
         width: w,
         height: h,
     }
-}
-
-const adjustSub = (val: number, min: number = 1.1, max: number = 1.4) => {
-    return Math.max(min, Math.min(max, val))
 }
 
 export const webCompressImageLimit = async (blob: Blob, limit: number = 800 * 1000) => {
@@ -118,21 +115,6 @@ export const webRequestImageBlob = (url: string) => new Promise<Blob>((resolve, 
     })
     xhr.send()
 })
-
-
-const needRebuild = (exif: TExif): exif is TExifForce => {
-    return exifHasOrientation(exif) && exifHasSize(exif) && exif.Orientation! > 1
-}
-
-const getExifSize = (exif: TExif): [number, number] => {
-    if (isValidNumber(exif.ImageWidth) && (isValidNumber(exif.ImageLength) || isValidNumber(exif.ImageHeight))) {
-        return [exif.ImageWidth, isValidNumber(exif.ImageLength) ? exif.ImageLength : exif.ImageHeight] as [number, number]
-    } else if (isValidNumber(exif.PixelXDimension) && isValidNumber(exif.PixelYDimension)) {
-        return [exif.PixelXDimension, exif.PixelYDimension]
-    } else {
-        throw 'The EXIF has no size infomations.'
-    }
-}
 
 export const webRebuildImage = async (blob: Blob) => {
     const arrBuf = await blob.arrayBuffer()
@@ -215,3 +197,5 @@ export const webRebuildImage = async (blob: Blob) => {
     }
     return res
 }
+
+export * from "@imnull/imgkit"

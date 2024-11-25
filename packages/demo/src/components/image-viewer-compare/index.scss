@@ -1,0 +1,42 @@
+.image-viewer-compare-wrapper {
+    background-color: #000;
+    width: 96vw;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: center;
+    .image-viewer {
+        box-sizing: border-box;
+        width: 48vw;
+        height: 48vw;
+        border-radius: 0px;
+        background-size: contain;
+        background-position: center center;
+        background-repeat: no-repeat;
+        flex-shrink: 0;
+        flex-grow: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        &.origin::before {
+            content: '原图';
+            font-size: 12px;
+            padding: 5px 0;
+            color: #fff;
+            text-align: center;
+            display: block;
+            width: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        &.fixed::before {
+            content: '矫正';
+            font-size: 12px;
+            padding: 5px 0;
+            color: #fff;
+            text-align: center;
+            display: block;
+            width: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+    }
+}

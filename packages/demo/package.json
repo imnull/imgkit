@@ -29,8 +29,15 @@
     "webpack-dev-server": "^5.1.0"
   },
   "dependencies": {
-    "@imnull/imgkit": "*",
+    "@imnull/imgkit-web": "*",
+    "@imnull/exif": "*",
+    "@imnull/mime": "*",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
-  }
+  },
+  "workspaces": [
+    "@imnull/imgkit-web",
+    "@imnull/exif",
+    "@imnull/mime"
+  ]
 }
