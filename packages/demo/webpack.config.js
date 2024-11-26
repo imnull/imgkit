@@ -9,7 +9,7 @@ module.exports = options => {
         mode: WEBPACK_SERVE ? 'development' : 'production',
         entry: './src/index',
         output: {
-            path: path.resolve(__dirname, '../../docs'),
+            path: path.resolve(__dirname, '../../docs/imgkit'),
             filename: 'main.js',
         },
         module: {
