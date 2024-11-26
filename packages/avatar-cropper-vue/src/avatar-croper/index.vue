@@ -130,7 +130,6 @@ export default {
                     this.top = (window.innerHeight - this.height) / 2
                 })
             }
-
         },
         snap() {
             this.snapWidth = this.width
