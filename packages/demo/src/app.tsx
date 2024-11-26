@@ -24,12 +24,13 @@ export default () => {
 
                     getExifSchema(file)
 
-                    const origin = await readAsDataURL(file)
-                    setOrigin(origin)
 
                     const buff = await file.arrayBuffer()
 
                     const op = new ExifOperator(buff)
+
+                    const origin = await readAsDataURL(new File(op.removeExif(), file.name, { type: file.type }))
+                    setOrigin(origin)
 
                     console.log('Exif schema', op.getExifSchema())
 
