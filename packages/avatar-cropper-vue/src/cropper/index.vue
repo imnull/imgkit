@@ -80,11 +80,11 @@ export default {
             const size = Math.max(this.pxWidth, this.pxHeight)
             const left = (window.innerWidth - size) / 2
             const top = (window.innerHeight - size) / 2
-            return `width:${size}px;height:${size}px;left:${left}px;top:${top}px;`
+            return `width:${size}px;height:${size}px;left:${left}px;top:${top}px;transform:scale(${this.zoom});`
         },
         containerCssText() {
             return ``
-            + `transform:scale(${this.zoom}) rotate(${this.rotate * -90}deg);`
+            + `transform:rotate(${this.rotate * -90}deg);`
         },
         imgCssText() {
             const x = this.left / this.zoom
@@ -183,7 +183,7 @@ export default {
                     this.pxHeight = img.height
                     this.minZoom = Math.max(this.viewport.width / img.width, this.viewport.height / img.height)
                     this.zoom = this.minZoom
-                    this.zoom = 0.2
+                    // this.zoom = 0.2
                     this.left = 0
                     this.top = 0
                 })
