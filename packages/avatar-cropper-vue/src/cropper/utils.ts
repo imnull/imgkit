@@ -86,7 +86,7 @@ export const getEventNames = () => {
 export const getEventPoints = (e: TouchEvent): { x: number; y: number }[] => {
     if(e.touches) {
         const arr = Array.from(e.touches).map(ev => ({ x: ev.clientX, y: ev.clientY })).slice(0, 2)
-        arr.push({ x: window.innerWidth / 2, y: window.innerHeight / 2 })
+        // arr.push({ x: window.innerWidth / 2, y: window.innerHeight / 2 })
         return arr
     } else {
         const _e = e as unknown as MouseEvent
