@@ -217,7 +217,7 @@ export default {
         async handleConfirm(e) {
             e.stopPropagation()
             const scale = this.pxWidth / this.width
-            
+
             const left = (this.viewport.left - this.left) * scale
             const top = (this.viewport.top - this.top) * scale
             const width = this.viewport.width * scale
@@ -290,7 +290,7 @@ export default {
         display: flex;
         z-index: 5;
         user-select: none;
-        backdrop-filter: blur(2px);
+        // backdrop-filter: blur(2px);
     }
     .debug {
         z-index: 99;
@@ -312,7 +312,7 @@ export default {
         flex-direction: row;
         justify-content: space-evenly;
         padding-bottom: 40px;
-        background-color: rgba(255,255,255,0.2);
+        // background-color: rgba(255,255,255,0.2);
         user-select: none;
         .btn {
             // border: 1px solid #fff;
