@@ -1,6 +1,6 @@
 <template>
     <div class="image-viewer" @click="handleClick" :style="wrapperCssText">
-        <input :key="hash" class="file" ref="file" type="file" @change="handleFileChange" />
+        <input accept="image/*" :key="hash" class="file" ref="file" type="file" @change="handleFileChange" />
     </div>
 </template>
 <script lang="js">
