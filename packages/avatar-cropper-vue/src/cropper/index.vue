@@ -5,12 +5,14 @@
         class="avatar-croper-wrapper"
     >
         <div class="image-wrapper" :style="wrapperCssText">
-            <div class="image-container" :style="containerCssText">
-                <canvas
-                    ref="canvas"
-                    @contextmenu.prevent="preventDefault"
-                    :style="imgCssText"
-                />
+            <div class="image-zoom" :style="zoomCssText">
+                <div class="image-rotate" :style="rotateCssText">
+                    <canvas
+                        ref="canvas"
+                        @contextmenu.prevent="preventDefault"
+                        :style="imgCssText"
+                    />
+                </div>
             </div>
         </div>
         <div class="mask" :style="maskCssText"></div>
@@ -23,7 +25,11 @@
             >
                 取消
             </div>
-            <div class="btn icon" @touchstart.stop="stopPropagation" @click.stop="handleRotate"></div>
+            <div
+                class="btn icon"
+                @touchstart.stop="stopPropagation"
+                @click.stop="handleRotate"
+            ></div>
             <div
                 class="btn"
                 @touchstart.stop="stopPropagation"
@@ -80,16 +86,20 @@ export default {
             const size = Math.max(this.pxWidth, this.pxHeight)
             const left = (window.innerWidth - size) / 2
             const top = (window.innerHeight - size) / 2
-            return `width:${size}px;height:${size}px;left:${left}px;top:${top}px;transform:scale(${this.zoom});`
+            return `width:${size}px;height:${size}px;left:${left}px;top:${top}px;`
         },
-        containerCssText() {
-            return ``
-            + `transform:rotate(${this.rotate * -90}deg);`
+        rotateCssText() {
+            const size = Math.max(this.pxWidth, this.pxHeight)
+            return `width:${size}px;height:${size}px;transform:rotate(${this.rotate * -90}deg);`
+        },
+        zoomCssText() {
+            const size = Math.max(this.pxWidth, this.pxHeight)
+            return `width:${size}px;height:${size}px;transform:scale(${this.zoom});`
         },
         imgCssText() {
             const x = this.left / this.zoom
             const y = this.top / this.zoom
-            return `width:${this.pxWidth}px;height:${this.pxHeight}px;transform:translateX(${x}px) translateY(${y}px)`
+            return `transform:translateX(${x}px) translateY(${y}px);`
         },
         minLeft() {
             if(!this.viewport) {
@@ -155,18 +165,6 @@ export default {
         }
     },
     methods: {
-        drawCanvas(img) {
-            const canvas = this.$refs.canvas
-            canvas.width = img.width
-            canvas.height = img.height
-            const ctx = canvas.getContext('2d')
-            ctx.drawImage(img, 0, 0)
-        },
-        clearCanvas() {
-            const canvas = this.$refs.canvas
-            const ctx = canvas.getContext('2d')
-            ctx.clearRect(0, 0, canvas.width, canvas.height)
-        },
         async initSrc(src) {
             this.viewport = calContainSize(window.innerWidth, window.innerHeight, this.ratio, this.padding)
             const clipPath = calClipPath(window.innerWidth, window.innerHeight, this.viewport)
@@ -183,11 +181,24 @@ export default {
                     this.pxHeight = img.height
                     this.minZoom = Math.max(this.viewport.width / img.width, this.viewport.height / img.height)
                     this.zoom = this.minZoom
-                    // this.zoom = 0.2
                     this.left = 0
                     this.top = 0
+                    // this.zoom = 0.2
+                    // this.left = 50
                 })
             }
+        },
+        drawCanvas(img) {
+            const canvas = this.$refs.canvas
+            canvas.width = img.width
+            canvas.height = img.height
+            const ctx = canvas.getContext('2d')
+            ctx.drawImage(img, 0, 0)
+        },
+        clearCanvas() {
+            const canvas = this.$refs.canvas
+            const ctx = canvas.getContext('2d')
+            ctx.clearRect(0, 0, canvas.width, canvas.height)
         },
         snap() {
             this.snapLeft = this.left
@@ -211,7 +222,7 @@ export default {
             const sign = rotate === 1 || rotate === 2 ? -1 : 1
             this.left = Math.min(this.maxLeft, Math.max(this.minLeft, this.snapLeft + offset * sign))
         },
-        
+
         calTop(offset) {
             const rotate = this.rotate % 4
             const sign = rotate === 2 || rotate === 3 ? -1 : 1
@@ -231,6 +242,8 @@ export default {
         calZoom(offset) {
             const zoom = Math.max(this.minZoom, Math.min(this.maxZoom, this.snapZoom * offset))
             this.zoom = zoom
+            this.calLeft(0)
+            this.calTop(0)
         },
         resolveMouseMove() {
             if(this.snapPoints.length === 1 && this.points.length > 0) {
@@ -344,6 +357,8 @@ export default {
         },
         handleRotate() {
             this.rotate = (this.rotate + 1);
+            this.calLeft(0)
+            this.calTop(0)
         }
     },
     mounted() {
@@ -372,18 +387,19 @@ export default {
     user-select: none;
     .image-wrapper {
         position: absolute;
-        background-color: rgba(255,255,255,0.2);
-        .image-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        .image-zoom, .image-rotate {
             position: absolute;
             width: 100%;
             height: 100%;
-            transform-origin: center center;
-            background-repeat: no-repeat;
-            background-size: contain;
-            background-position: center;
             display: flex;
             align-items: center;
             justify-content: center;
+        }
+        .image-rotate {
             transition: transform 0.3s;
         }
     }
