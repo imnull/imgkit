@@ -217,7 +217,8 @@ export default {
         async handleConfirm(e) {
             e.stopPropagation()
             const scale = this.pxWidth / this.width
-            const left = (this.left - this.viewport.left) * scale
+            
+            const left = (this.viewport.left - this.left) * scale
             const top = (this.viewport.top - this.top) * scale
             const width = this.viewport.width * scale
             const height = this.viewport.height * scale
