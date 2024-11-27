@@ -174,8 +174,12 @@ export default {
                 const zoom = calDistance(b1, b2) / calDistance(a1, a2)
                 this.width = Math.min(this.maxWidth, Math.max(this.minWidth, this.snapWidth * zoom))
                 this.height = Math.min(this.maxHeight, Math.max(this.minHeight, this.snapHeight * zoom))
-                const left = Math.min(this.maxLeft, Math.max(this.minLeft, this.snapLeft + (this.snapWidth - this.width) / 2))
-                const top = Math.min(this.maxTop, Math.max(this.minTop, this.snapTop + (this.snapHeight - this.height) / 2))
+                const hCenter = this.viewport.width / 2 + this.viewport.left
+                const vCenter = this.viewport.height / 2 + this.viewport.top
+                const hRatio = (hCenter - this.snapLeft) / this.snapWidth
+                const vRatio = (vCenter - this.snapTop) / this.snapHeight
+                const left = Math.min(this.maxLeft, Math.max(this.minLeft, this.snapLeft + (this.snapWidth - this.width) * hRatio))
+                const top = Math.min(this.maxTop, Math.max(this.minTop, this.snapTop + (this.snapHeight - this.height) * vRatio))
                 this.left = left
                 this.top = top
             }
