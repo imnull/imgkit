@@ -1,21 +1,33 @@
 <template>
-    <div ref="wrapper" class="avatar-croper-wrapper" :style="imgCssText">
-        <div class="mask" :style="maskCssText">
-            <pre v-if="debug" class="debug">{{ debugCode }}</pre>
+    <div ref="wrapper" @contextmenu.prevent="preventDefault" class="avatar-croper-wrapper">
+        <img @contextmenu.prevent="preventDefault" class="handler" :src="url" :style="imgCssText" />
+        <div class="mask" :style="maskCssText"></div>
+        <pre v-if="debug" class="debug">{{ debugCode }}</pre>
+        <div class="btns">
+            <div class="btn" @touchstart.stop="stopPropagation" @click.stop="handleCancel">取消</div>
+            <div class="btn" @touchstart.stop="stopPropagation" @click.stop="handleConfirm">确定</div>
         </div>
     </div>
 </template>
 <script lang="js">
-import { calClipPath, calContainSize, loadImage, getEventNames, getEventPoints, calDistance } from './utils'
+import { calClipPath, calContainSize, loadImage, getEventNames, getEventPoints, calDistance, toBlob } from './utils'
 export default {
     props: {
         src: {
-            type: String,
-            default: ''
+            type: File,
+            default: null
         },
         maxZoom: {
             type: Number,
             default: 1.2
+        },
+        padding: {
+            type: Number,
+            default: 10,
+        },
+        ratio: {
+            type: Number,
+            default: 1,
         },
         debug: {
             type: Boolean,
@@ -41,17 +53,23 @@ export default {
             if(!this.url) {
                 return ''
             }
-            return `background-image:url("${this.url}");`
-            + `background-position:${this.left}px ${this.top}px;`
-            + `background-size:${this.width}px ${this.height}px;`
+            return `transform:translateX(${this.left}px) translateY(${this.top}px) scale(${this.width/this.pxWidth});`
+            // + `width:${this.width}px;`
+            // + `height:${this.height}px;`
+
+            // return `left:${this.left}px;`
+            // + `top:${this.top}px;`
+            // + `width:${this.width}px;`
+            // + `height:${this.height}px;`
         },
-        maskCssText() {
-            if(!this.viewport) {
-                return ''
-            }
-            const clipPath = calClipPath(window.innerWidth, window.innerHeight, this.viewport)
-            return `clip-path:path('${clipPath}');`
-        },
+        // backImgCssText() {
+        //     if(!this.url) {
+        //         return ''
+        //     }
+        //     return `background-image:url("${this.url}");`
+        //     + `background-position:${this.left}px ${this.top}px;`
+        //     + `background-size:${this.width}px ${this.height}px;`
+        // },
         minWidth() {
             return this.minZoom * this.pxWidth
         },
@@ -106,11 +124,15 @@ export default {
             pxWidth: 0,
             pxHeight: 0,
             minZoom: 1,
+            maskCssText: '',
         }
     },
     methods: {
-        initSrc(src) {
-            this.viewport = calContainSize(window.innerWidth, window.innerHeight, 1, 10)
+        async initSrc(src) {
+            this.viewport = calContainSize(window.innerWidth, window.innerHeight, this.ratio, this.padding)
+            const clipPath = calClipPath(window.innerWidth, window.innerHeight, this.viewport)
+            this.maskCssText = `clip-path:path('${clipPath}');`
+
             if(!src) {
                 this.url = ''
                 this.width = 0
@@ -119,7 +141,7 @@ export default {
                 this.top = 0
             } else {
                 loadImage(src).then(img => {
-                    this.url = src
+                    this.url = img.src
                     this.pxWidth = img.width
                     this.pxHeight = img.height
                     this.minZoom = Math.max(this.viewport.width / img.width, this.viewport.height / img.height)
@@ -167,8 +189,8 @@ export default {
             const mousedown = e => {
                 this.points = getEventPoints(e)
                 this.snap()
-                wrapper.addEventListener(names.mousemove, mousemove)
-                wrapper.addEventListener(names.mouseup, mouseup)
+                document.addEventListener(names.mousemove, mousemove)
+                document.addEventListener(names.mouseup, mouseup)
             }
             const mousemove = e => {
                 this.points = getEventPoints(e)
@@ -177,17 +199,63 @@ export default {
             const mouseup = e => {
                 this.points = getEventPoints(e)
                 this.snap()
-                wrapper.removeEventListener(names.mousemove, mousemove)
-                wrapper.removeEventListener(names.mouseup, mouseup)
+                document.removeEventListener(names.mousemove, mousemove)
+                document.removeEventListener(names.mouseup, mouseup)
             }
-            wrapper.addEventListener(names.mousedown, mousedown)
+            document.addEventListener(names.mousedown, this.mousedown = mousedown)
         },
+        stopPropagation(e) {
+            e.stopPropagation()
+        },
+        preventDefault(e) {
+            e.preventDefault()
+        },
+        handleCancel(e) {
+            e.stopPropagation()
+            this.$emit('cancel')
+        },
+        async handleConfirm(e) {
+            e.stopPropagation()
+            const scale = this.pxWidth / this.width
+            const left = (this.left - this.viewport.left) * scale
+            const top = (this.viewport.top - this.top) * scale
+            const width = this.viewport.width * scale
+            const height = this.viewport.height * scale
+            // const w = 256
+            // const h = w * (this.viewport.height / this.viewport.width) >> 0
+            const w = this.viewport.width
+            const h = this.viewport.height
+            const image = await loadImage(this.src)
+            const canvas = document.createElement('canvas')
+            canvas.width = w
+            canvas.height = h
+            const ctx = canvas.getContext('2d')
+            ctx.drawImage(image
+                , left, top, width, height
+                , 0, 0, w, h
+            )
+            try {
+                if(this.src instanceof File) {
+                    const result = await toBlob(canvas, this.src.type)
+                    const file = new File([result], this.src.name)
+                    this.$emit('done', file)
+                } else {
+                    const result = await toBlob(canvas)
+                    this.$emit('done', result)
+                }
+            } catch(ex) {
+                this.$emit('error', ex)
+            }
+
+        }
     },
     mounted() {
         this.initSrc(this.src)
         this.initEvents()
     },
     beforeDestroy() {
+        const names = getEventNames()
+        document.removeEventListener(names.mousedown, this.mousedown)
     }
 }
 </script>
@@ -205,8 +273,13 @@ export default {
     background-color: #000;
     background-repeat: no-repeat;
     user-select: none;
+    .handler {
+        position: absolute;
+        z-index: 1;
+        transform-origin: left top;
+    }
     .mask {
-        background-color: rgba(0, 0, 0, 0.7);
+        background-color: rgba(0, 0, 0, 0.5);
         position: absolute;
         left: 0;
         right: 0;
@@ -216,15 +289,35 @@ export default {
         display: flex;
         z-index: 5;
         user-select: none;
-        .debug {
-            z-index: 99;
-            position: relative;
-            display: block;
-            pointer-events: none;
-            color: #fff;
+        backdrop-filter: blur(2px);
+    }
+    .debug {
+        z-index: 99;
+        position: relative;
+        display: block;
+        pointer-events: none;
+        color: #fff;
+        user-select: none;
+        padding: 10px;
+    }
+    .btns {
+        position: absolute;
+        width: 100%;
+        bottom: 0;
+        color: #fff;
+        z-index: 10;
+        display: flex;
+        font-size: 16px;
+        flex-direction: row;
+        justify-content: space-evenly;
+        padding-bottom: 40px;
+        background-color: rgba(255,255,255,0.2);
+        user-select: none;
+        .btn {
+            // border: 1px solid #fff;
             user-select: none;
+            padding: 5px 10px;
         }
     }
-    
 }
 </style>

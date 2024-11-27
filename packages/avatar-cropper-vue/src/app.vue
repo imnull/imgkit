@@ -1,14 +1,37 @@
 <template>
     <div class="app">
-        <h1>Hello VUE 2</h1>
-        <AvatarCropper :debug="true" src="images/1.jpg" />
+        <Viewer @select="handleSelectFile" :src="preview" />
+        <Cropper v-if="showCropper" :debug="true" :padding="20" :src="image" @done="handleCrop" @cancel="handleCancel" />
     </div>
 </template>
 <script lang="js">
-import AvatarCropper from './avatar-croper'
+import Cropper from './cropper'
+import Viewer from './viewer'
 export default {
     components: {
-        AvatarCropper,
+        Cropper,
+        Viewer,
+    },
+    data() {
+        return {
+            showCropper: false,
+            image: null,
+            preview: null,
+        }
+    },
+    methods: {
+        handleSelectFile(file) {
+            this.image = file
+            this.showCropper = true
+        },
+        async handleCrop(file) {
+            this.preview = file
+            this.handleCancel()
+        },
+        handleCancel() {
+            this.showCropper = false
+            this.image = null
+        }
     }
 }
 </script>

@@ -50,7 +50,7 @@ export const calClipPath = (width: number, height: number, rect: { left: number;
     return steps.join(' ')
 }
 
-export const loadImage = (src: string) => new Promise<HTMLImageElement>((resolve, reject) => {
+export const loadImage = (src: string | Blob) => new Promise<HTMLImageElement>((resolve, reject) => {
     const image = new Image()
     image.addEventListener('load', () => {
         resolve(image)
@@ -58,7 +58,13 @@ export const loadImage = (src: string) => new Promise<HTMLImageElement>((resolve
     image.addEventListener('error', err => {
         reject(err)
     })
-    image.src = src
+    if(src instanceof Blob) {
+        readAsDataURL(src).then(dataUrl => {
+            image.src = dataUrl
+        }, reject)
+    } else {
+        image.src = src
+    }
 })
 
 export const getEventNames = () => {
@@ -93,3 +99,24 @@ export const calDistance = (a: { x: number; y: number }, b: { x: number; y: numb
     const y = b.y - a.y
     return Math.sqrt(x * x + y * y)
 }
+
+export const readAsDataURL = (blob: Blob) => new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.addEventListener('load', () => {
+        resolve(reader.result as string)
+    })
+    reader.addEventListener('error', err => {
+        reject(err)
+    })
+    reader.readAsDataURL(blob)
+})
+
+export const toBlob = (canvas: HTMLCanvasElement, type: string = 'image/jpeg', quality: number = 0.8) => new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob(res => {
+        if(!res) {
+            reject('Canvas to-blob failed')
+        } else {
+            resolve(res)
+        }
+    }, type, quality)
+})
