@@ -269,6 +269,7 @@ export default {
                 document.addEventListener(names.mouseup, mouseup)
             }
             const mousemove = e => {
+                e.preventDefault()
                 this.points = getEventPoints(e)
                 this.resolveMouseMove()
             }
@@ -278,7 +279,11 @@ export default {
                 document.removeEventListener(names.mousemove, mousemove)
                 document.removeEventListener(names.mouseup, mouseup)
             }
+            const g = e => {
+
+            }
             document.addEventListener(names.mousedown, this.mousedown = mousedown)
+            window.addEventListener('')
         },
         stopPropagation(e) {
             e.stopPropagation()
