@@ -265,7 +265,7 @@ export default {
             const mousedown = e => {
                 this.points = getEventPoints(e)
                 this.snap()
-                document.addEventListener(names.mousemove, mousemove)
+                document.addEventListener(names.mousemove, mousemove, { passive: false })
                 document.addEventListener(names.mouseup, mouseup)
             }
             const mousemove = e => {
@@ -279,11 +279,16 @@ export default {
                 document.removeEventListener(names.mousemove, mousemove)
                 document.removeEventListener(names.mouseup, mouseup)
             }
-            const g = e => {
-
+            const gesturestart = e => {
+                e.preventDefault()
             }
-            document.addEventListener(names.mousedown, this.mousedown = mousedown)
-            window.addEventListener('')
+            document.addEventListener('gesturestart', this.gesturestart = gesturestart)
+            document.addEventListener(names.mousedown, this.mousedown = mousedown, { passive: false })
+        },
+        disposeEvents() {
+            const names = getEventNames()
+            document.removeEventListener(names.mousedown, this.mousedown)
+            document.removeEventListener('gesturestart', this.gesturestart)
         },
         stopPropagation(e) {
             e.stopPropagation()
@@ -371,8 +376,7 @@ export default {
         this.initEvents()
     },
     beforeDestroy() {
-        const names = getEventNames()
-        document.removeEventListener(names.mousedown, this.mousedown)
+        this.disposeEvents()
     }
 }
 </script>
@@ -396,7 +400,8 @@ export default {
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        .image-zoom, .image-rotate {
+        .image-zoom,
+        .image-rotate {
             position: absolute;
             width: 100%;
             height: 100%;
