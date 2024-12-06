@@ -33,7 +33,7 @@ export default {
             if(!this.preview) {
                 return ''
             }
-            return `background-image:url("${this.preview}");background-size:cover;`
+            return `background-image:url("${this.preview}");background-size:contain;`
         }
     },
     methods: {
@@ -60,11 +60,12 @@ export default {
 <style lang="scss" scoped>
 .image-viewer {
     // border: 2px dotted #ccc;
-    border-radius: 20px;
+    border-radius: 12px;
     background-color: #fafafa;
     box-sizing: border-box;
-    height: 750rpx;
-    height: 750rpx;
+    height: 96vw;
+    width: 96vw;
+    margin: 0 auto;
     background-image: url("images/upload-cccccc.svg");
     background-size: 30%;
     background-repeat: no-repeat;

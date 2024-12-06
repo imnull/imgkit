@@ -1,7 +1,7 @@
 <template>
     <div class="app">
         <Viewer @select="handleSelectFile" :src="preview" />
-        <div class="version">Version 1.2</div>
+        <div class="version">Version 2.0</div>
         <Cropper v-if="showCropper" :debug="true" :padding="20" :src="image" @done="handleCrop" @cancel="handleCancel" />
     </div>
 </template>
@@ -36,9 +36,19 @@ export default {
     }
 }
 </script>
-<style lang="scss" scoped>
-html, body {
+<style lang="scss">
+body {
     touch-action: manipulation;
+    margin: 0;
+    padding: 0;
+}
+.app {
+    overflow: hidden;
+    width: 100vw;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    padding: 2vw;
 }
 .version {
     width: 100%;
