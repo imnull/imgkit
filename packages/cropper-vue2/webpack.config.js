@@ -12,7 +12,7 @@ module.exports = options => {
         entry: './src/index.ts',
         // 输出配置
         output: {
-            path: path.resolve(__dirname, '../../docs/cropper'),
+            path: path.resolve(__dirname, '../../docs/cropper-vue2'),
             filename: 'main.js',
             // publicPath: '/static/'
         },

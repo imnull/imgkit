@@ -5,3 +5,5 @@
 # @imnull/mime [![npm](https://img.shields.io/npm/v/@imnull/mime.svg)](https://www.npmjs.com/package/@imnull/mime)
 
 # @imnull/exif [![npm](https://img.shields.io/npm/v/@imnull/exif.svg)](https://www.npmjs.com/package/@imnull/exif)
+
+# @imnull/image-cropper [![npm](https://img.shields.io/npm/v/@imnull/image-cropper.svg)](https://www.npmjs.com/package/@imnull/image-cropper)
