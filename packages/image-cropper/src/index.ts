@@ -160,6 +160,9 @@ export class ImageCropper {
             const [a1, a2] = this.snapPoints
             const [b1, b2] = this.points
             this.calZoom(CalDistance(b1, b2) / CalDistance(a1, a2))
+            const o: TPoint = { x: (a1.x + a2.x) * .5, y: (a1.y + a2.y) * .5 }
+            const p: TPoint = { x: (b1.x + b2.x) * .5, y: (b1.y + b2.y) * .5 }
+            this.calPosition(p, o)
         }
     }
 
