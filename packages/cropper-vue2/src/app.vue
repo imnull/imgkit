@@ -1,7 +1,7 @@
 <template>
     <div class="app">
         <Viewer @select="handleSelectFile" :src="preview" />
-        <div class="version">Version 2.0</div>
+        <div class="version">Version 2.1</div>
         <Cropper v-if="showCropper" :debug="true" :padding="20" :src="image" @done="handleCrop" @cancel="handleCancel" />
     </div>
 </template>
